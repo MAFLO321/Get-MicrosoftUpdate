@@ -1,5 +1,6 @@
 # Gives a list of all Microsoft Updates sorted by KB number/HotfixID
 # By Tom Arbuthnot. Lyncdup.com
+# and Matthias Freund (MAFLO321)
 
 # http://lyncdup.com/2013/09/list-all-microsoftwindows-updates-with-powershell-sorted-by-kbhotfixid-get-microsoftupdate/
 
@@ -10,21 +11,31 @@ $totalupdates = $wu.GetTotalHistoryCount()
 $all = $wu.QueryHistory(0,$totalupdates)
 
 # Define a new array to gather output
- $OutputCollection=  @()
-		
-Foreach ($update in $all)
-    {
+$OutputCollection = @()
+	
+Foreach ($update in $all) {
     $string = $update.title
 
     $Regex = "KB\d*"
     $KB = $string | Select-String -Pattern $regex | Select-Object { $_.Matches }
 
-     $output = New-Object -TypeName PSobject
-     $output | add-member NoteProperty "HotFixID" -value $KB.' $_.Matches '.Value
-     $output | add-member NoteProperty "Title" -value $string
-     $OutputCollection += $output
-
+    $add = 1
+    Foreach ($object in $OutputCollection) {
+        if ($object.HotFixID -eq $KB.' $_.Matches '.Value) {
+            #if ($object.Title -eq $string) {
+                $add = 0
+                break
+            #}
+        }
     }
+
+    $output = New-Object -TypeName PSobject
+    $output | add-member NoteProperty "HotFixID" -value $KB.' $_.Matches '.Value
+    $output | add-member NoteProperty "Title" -value $string
+    if ($add) {
+        $OutputCollection += $output
+    }
+}
 
 # Oupput the collection sorted and formatted:
 $OutputCollection | Sort-Object HotFixID | Format-Table -AutoSize
